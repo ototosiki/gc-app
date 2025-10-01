@@ -24,9 +24,9 @@ const Auth = () => {
       if (error) throw error;
       setMessage({ type: 'success', text: 'ログインに成功しました。' });
       router.push('/todos');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
-      setMessage({ type: 'error', text: error.message ?? 'ログインに失敗しました。' });
+      setMessage({ type: 'error', text: error instanceof Error ? error.message : 'ログインに失敗しました。' });
     } finally {
       setIsLoading(false);
     }
@@ -46,9 +46,9 @@ const Auth = () => {
       });
       if (error) throw error;
       setMessage({ type: 'success', text: 'アカウント作成に成功しました。メールを確認してください。' });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
-      setMessage({ type: 'error', text: error.message ?? 'サインアップに失敗しました。' });
+      setMessage({ type: 'error', text: error instanceof Error ? error.message : 'サインアップに失敗しました。' });
     } finally {
       setIsLoading(false);
     }

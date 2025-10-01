@@ -2,15 +2,14 @@
 
 ## 概要
 
-GC Todo Appでは、Next.js 15のServer ActionsとSupabaseクライアントを組み合わせてAPIを実装しています。RESTful APIではなく、Server Actionsによる型安全なAPI設計を採用しています。
+GC Todo Appでは、Client ComponentsとSupabaseクライアントを組み合わせてAPIを実装しています。楽観的UI更新による高速レスポンスと、エラー時の状態復元を実現しています。
 
 ## アーキテクチャ
 
-### 1. Server Actions
-- Next.js 15のServer Actionsを使用
-- サーバーサイドでのデータ処理
-- 型安全性の確保
-- 自動的なCSRF保護
+### 1. Client Components + Supabaseクライアント
+- Client Componentsで直接Supabaseクライアントを使用
+- 楽観的UI更新による高速レスポンス
+- エラー時の状態復元
 
 ### 2. Supabaseクライアント
 - サーバーサイド: `createServerComponentClient`
@@ -55,13 +54,13 @@ const { error } = await supabase.auth.signOut();
 
 ### 1. Todo一覧取得
 
-**実装場所:** `src/app/todos/page.tsx` (Server Component)
+**実装場所:** `src/components/TodoList.tsx` (Client Component)
 
 ```typescript
-const { data: todos } = await supabase
+const { data, error } = await supabase
   .from('todos')
   .select('*')
-  .eq('user_id', session.user.id)
+  .eq('user_id', user.id)
   .order('id', { ascending: true });
 ```
 
@@ -82,7 +81,7 @@ todos: Todo[] | null
 
 ### 2. Todo作成
 
-**実装場所:** `src/app/todos/AddTodoForm.tsx` (Client Component)
+**実装場所:** `src/components/AddTodoForm.tsx` (Client Component)
 
 ```typescript
 const { error } = await supabase
@@ -108,55 +107,62 @@ type CreateTodoRequest = {
 
 ### 3. Todo更新（完了状態切り替え）
 
-**実装場所:** `src/app/todos/page.tsx` (Server Action)
+**実装場所:** `src/components/TodoList.tsx` (Client Component)
 
 ```typescript
-async function toggleTodo(formData: FormData) {
-  'use server'
-  const id = formData.get('id') as string;
-  const completed = formData.get('completed') === 'true';
-  
-  await supabase
-    .from('todos')
-    .update({ completed: !completed })
-    .eq('id', id)
-    .eq('user_id', session.user.id);
+const toggleTodo = async (id: number, completed: boolean) => {
+  try {
+    const { error } = await supabase
+      .from('todos')
+      .update({ completed: !completed })
+      .eq('id', id)
+
+    if (error) throw error
     
-  revalidatePath('/todos');
+    // 楽観的UI更新
+    setTodos(prev => prev.map(todo => 
+      todo.id === id ? { ...todo, completed: !completed } : todo
+    ))
+  } catch (err: any) {
+    setError(err.message || '更新に失敗しました')
+  }
 }
 ```
 
 **リクエスト:**
 ```typescript
 type ToggleTodoRequest = {
-  id: string;
-  completed: string; // 'true' | 'false'
+  id: number;
+  completed: boolean;
 };
 ```
 
 ### 4. Todo削除
 
-**実装場所:** `src/app/todos/page.tsx` (Server Action)
+**実装場所:** `src/components/TodoList.tsx` (Client Component)
 
 ```typescript
-async function deleteTodo(formData: FormData) {
-  'use server'
-  const id = formData.get('id') as string;
-  
-  await supabase
-    .from('todos')
-    .delete()
-    .eq('id', id)
-    .eq('user_id', session.user.id);
+const deleteTodo = async (id: number) => {
+  try {
+    const { error } = await supabase
+      .from('todos')
+      .delete()
+      .eq('id', id)
+
+    if (error) throw error
     
-  revalidatePath('/todos');
+    // 楽観的UI更新
+    setTodos(prev => prev.filter(todo => todo.id !== id))
+  } catch (err: any) {
+    setError(err.message || '削除に失敗しました')
+  }
 }
 ```
 
 **リクエスト:**
 ```typescript
 type DeleteTodoRequest = {
-  id: string;
+  id: number;
 };
 ```
 
@@ -266,23 +272,33 @@ const { data } = await supabase
   .eq('user_id', user.id);
 ```
 
-### 2. キャッシュ戦略
+### 2. 楽観的UI更新
 ```typescript
-// revalidatePath でキャッシュを無効化
-revalidatePath('/todos');
+// 即座にUI更新
+setTodos(prev => prev.map(todo => 
+  todo.id === id ? { ...todo, completed: !completed } : todo
+))
+
+// Supabaseで実際の更新
+const { error } = await supabase
+  .from('todos')
+  .update({ completed: !completed })
+  .eq('id', id)
+
+// エラー時は元に戻す
+if (error) {
+  setTodos(prev => prev.map(todo => 
+    todo.id === id ? { ...todo, completed: completed } : todo
+  ))
+}
 ```
 
-### 3. 楽観的UI更新
+### 3. 状態管理
 ```typescript
-// クライアント側で即座にUI更新
-setTodos(prev => [...prev, newTodo]);
-
-// サーバー側で実際の更新
-const { error } = await supabase.from('todos').insert(newTodo);
-if (error) {
-  // エラー時は元に戻す
-  setTodos(prev => prev.filter(t => t.id !== newTodo.id));
-}
+// useState による状態管理
+const [todos, setTodos] = useState<Todo[]>([])
+const [loading, setLoading] = useState(true)
+const [error, setError] = useState<string | null>(null)
 ```
 
 ## セキュリティ

@@ -66,12 +66,14 @@ User Data Only
 src/
 ├── app/                    # Next.js App Router
 │   ├── todos/
-│   │   ├── page.tsx       # Todo一覧ページ（Server Component）
-│   │   └── AddTodoForm.tsx # Todo追加フォーム（Client Component）
-│   ├── login/             # ログインページ（将来実装）
-│   └── page.tsx           # ホームページ
+│   │   └── page.tsx       # Todo一覧ページ（Server Component）
+│   ├── login/
+│   │   └── page.tsx       # ログインページ
+│   └── page.tsx           # ホームページ（リダイレクト）
 ├── components/            # 再利用可能なコンポーネント
-│   └── Auth.tsx           # 認証フォーム（Client Component）
+│   ├── Auth.tsx           # 認証フォーム（Client Component）
+│   ├── AddTodoForm.tsx    # Todo追加フォーム（Client Component）
+│   └── TodoList.tsx       # Todo一覧（Client Component）
 ├── lib/                   # ユーティリティ・設定
 │   ├── supabaseClient.ts  # クライアント用Supabase設定
 │   └── supabaseServer.ts  # サーバー用Supabase設定
@@ -81,12 +83,14 @@ src/
 ## コンポーネント設計
 
 ### Server Components
-- **`/app/todos/page.tsx`**: Todo一覧表示、データフェッチ、認証チェック
-- **Server Actions**: データの作成・更新・削除処理
+- **`/app/todos/page.tsx`**: 認証チェック、レイアウト提供
+- **`/app/login/page.tsx`**: Authコンポーネントの配置
+- **`/app/page.tsx`**: ホームページ（リダイレクト）
 
 ### Client Components
 - **`Auth.tsx`**: ログイン・新規登録フォーム
 - **`AddTodoForm.tsx`**: Todo追加フォーム
+- **`TodoList.tsx`**: Todo一覧表示・操作
 
 ## セキュリティ設計
 
