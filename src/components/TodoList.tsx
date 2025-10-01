@@ -1,6 +1,7 @@
 "use client"
 import { useState, useEffect } from 'react'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { useRouter } from 'next/navigation'
 
 type Todo = {
   id: number
@@ -18,6 +19,7 @@ export default function TodoList() {
   const [updatingIds, setUpdatingIds] = useState<Set<number>>(new Set())
   const [deletingIds, setDeletingIds] = useState<Set<number>>(new Set())
   const supabase = createClientComponentClient()
+  const router = useRouter()
 
   useEffect(() => {
     fetchTodos()
@@ -30,7 +32,7 @@ export default function TodoList() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
         setError('認証が必要です')
-        return
+        return router.push('/login')
       }
 
       const { data, error } = await supabase
