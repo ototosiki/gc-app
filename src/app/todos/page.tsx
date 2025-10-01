@@ -2,8 +2,7 @@ import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import React from 'react'
 import { cookies } from 'next/headers';
 import Link from 'next/link';
-import AddTodoForm from '../../components/AddTodoForm'
-import TodoList from '../../components/TodoList'
+import TodoContainer from '../../components/TodoContainer'
 
 export default async function TodoPage() {
 const supabase = createServerComponentClient({ cookies });
@@ -25,8 +24,7 @@ if (!session?.user){
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-2xl mx-auto px-4 py-8">
         <h2 className="text-2xl font-semibold text-gray-800 mb-4">Todos</h2>
-        <AddTodoForm />
-        <TodoList />
+        <TodoContainer />
       </div>
     </div>
   )
