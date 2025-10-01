@@ -144,7 +144,7 @@ npm run dev
 ```typescript
 // src/middleware.ts が正しく設定されているか確認
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
 }
 ```
 
