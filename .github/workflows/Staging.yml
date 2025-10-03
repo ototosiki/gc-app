@@ -1,0 +1,30 @@
+name: Vercel Staging Deployment
+
+on:
+  push:
+    branches:
+      - staging   # only trigger when staging branch updates
+
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+  VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+
+jobs:
+  deploy-staging:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel
+
+      - name: Pull Vercel environment info
+        run: vercel pull --yes --environment=preview --token=${{ env.VERCEL_TOKEN }}
+
+      - name: Build project
+        run: vercel build --token=${{ env.VERCEL_TOKEN }}
+
+      - name: Deploy to Vercel (Staging)
+        run: vercel deploy --prebuilt --token=${{ env.VERCEL_TOKEN }}
