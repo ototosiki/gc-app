@@ -85,7 +85,7 @@ CREATE TRIGGER update_todos_updated_at
 ### 4.1 環境変数ファイルの作成
 
 ```bash
-cp .env.example .env.local
+cp env.example .env.local
 ```
 
 ### 4.2 環境変数の設定
